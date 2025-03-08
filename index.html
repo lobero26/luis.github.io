@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turismo Verde - Asistente Virtual</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .background-slider {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            color: white;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo span {
+            color: #4CAF50;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #4CAF50;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero-content {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .chatbot-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            height: 500px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-container.minimized {
+            height: 60px;
+            width: 300px;
+        }
+
+        .chat-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .chat-header h3 {
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-header h3 i {
+            margin-right: 10px;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+            animation: fadeIn 0.3s forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bot-message {
+            background-color: #f0f0f0;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .user-message {
+            background-color: #4CAF50;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .typing {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #888;
+            border-radius: 50%;
+            margin: 0 3px;
+            animation: typingAnimation 1.5s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #eee;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+        }
+
+        .chat-input button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+
+        .chat-input button:hover {
+            background-color: #3e8e41;
+        }
+
+        .chat-toggle {
+            background-color: #4CAF50;
+            color: white;
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+        }
+
+        .chat-toggle i {
+            font-size: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .chatbot-container {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 350px;
+            }
+
+            .chatbot-container.hidden {
+                display: none;
+            }
+
+            .chat-toggle {
+                display: flex;
+            }
+
+            nav ul {
+                display: none;
+            }
+        }
+
+        .voice-control {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .voice-control button {
+            background-color: transparent;
+            border: none;
+            color: #555;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .voice-control button i {
+            margin-right: 5px;
+        }
+
+        .speaking-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            margin-left: 10px;
+            display: none;
+        }
+
+        .speaking-indicator.active {
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .minimize-btn, .voice-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-slider">
+        <div class="slide active" style="background-image: url('/api/placeholder/1200/800');"></div>
+        <div class="slide" style="background-image: url('/api/placeholder/1200/800');"></div>
+        <div class="slide" style="background-image: url('/api/placeholder/1200/800');"></div>
+        <div class="overlay"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo">Turismo<span>Verde</span></div>
+            <nav>
+                <ul>
+                    <li><a href="#">Inicio</a></li>
+                    <li><a href="#">Destinos</a></li>
+                    <li><a href="#">Experiencias</a></li>
+                    <li><a href="#">Sostenibilidad</a></li>
+                    <li><a href="#">Contacto</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <div class="hero-content">
+                <h1>Descubre el mundo de forma sostenible</h1>
+                <p>Explora destinos ecológicos únicos con nuestro asistente virtual. Preguntas sobre rutas, actividades y consejos para un turismo responsable.</p>
+            </div>
+            
+            <div class="chatbot-container">
+                <div class="chat-header">
+                    <h3><i class="fas fa-robot"></i> Chat bot</h3>
+                    <div>
+                        <button class="voice-btn" title="Activar/Desactivar voz"><i class="fas fa-volume-up"></i></button>
+                        <button class="minimize-btn" title="Minimizar"><i class="fas fa-minus"></i></button>
+                    </div>
+                </div>
+                <div class="chat-body">
+                    <div class="message bot-message">
+                        ¡Hola! Soy tu asistente virtual de Turismo Verde. ¿En qué puedo ayudarte hoy? Puedes preguntarme sobre destinos ecológicos, actividades sostenibles o consejos para un viaje respetuoso con el medio ambiente.
+                    </div>
+                    <div class="typing">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+                <div class="voice-control">
+                    <span> <span class="speaking-indicator"></span></span>
+                </div>
+                <div class="chat-input">
+                    <input type="text" placeholder="Escribe tu mensaje aquí...">
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="chat-toggle">
+        <i class="fas fa-comments"></i>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elementos del DOM
+            const chatInput = document.querySelector('.chat-input input');
+            const chatButton = document.querySelector('.chat-input button');
+            const chatBody = document.querySelector('.chat-body');
+            const typingIndicator = document.querySelector('.typing');
+            const chatToggle = document.querySelector('.chat-toggle');
+            const chatContainer = document.querySelector('.chatbot-container');
+            const minimizeBtn = document.querySelector('.minimize-btn');
+            const chatHeader = document.querySelector('.chat-header');
+            const voiceBtn = document.querySelector('.voice-btn');
+            const speakingIndicator = document.querySelector('.speaking-indicator');
+            
+            // Variables para el control de la voz
+            let voiceEnabled = true;
+            let synth = window.speechSynthesis;
+            let speaking = false;
+            
+            // Respuestas predefinidas del chatbot
+            const botResponses = {
+            "hola": "¡Hola! ¿En qué puedo ayudarte hoy con tu experiencia de turismo ecológico?",
+            "destinos": "Tenemos varios destinos ecológicos populares como el Parque Nacional Sierra Nevada, la Reserva Natural de Doñana y el Valle de Ordesa. ¿Te gustaría información específica sobre alguno de ellos?",
+            "actividades": "Ofrecemos senderismo guiado, observación de aves, talleres de permacultura, kayak en aguas cristalinas y tours fotográficos de naturaleza. ¿Qué tipo de actividad te interesa más?",
+            "alojamiento": "Contamos con eco-lodges, casas rurales sostenibles y campings ecológicos. Todos nuestros alojamientos cumplen con estrictos criterios de sostenibilidad.",
+            "precios": "Los precios varían según el destino y la temporada. Por ejemplo, un tour de senderismo guiado puede costar desde 25€ por persona, mientras que una estancia en un eco-lodge puede variar entre 60€ y 150€ por noche.",
+            "reservas": "Puedes hacer tu reserva directamente en nuestra web, por teléfono al +51 969042961 o enviando un email a reservas@turismoverde.com",
+            "sostenibilidad": "Nos comprometemos con prácticas sostenibles como el uso de energías renovables, reducción de residuos, apoyo a las comunidades locales y conservación de la biodiversidad. ¿Te gustaría saber más sobre alguna de estas iniciativas?",
+            "transporte": "Recomendamos el uso de transporte público para llegar a nuestros destinos. También ofrecemos servicios de shuttle compartido y alquiler de bicicletas eléctricas en muchos de nuestros destinos.",
+            "gracias": "¡De nada! Estoy aquí para ayudarte. ¿Hay algo más en lo que pueda asistirte?",
+            "adios": "¡Hasta pronto! Espero que disfrutes de tu experiencia con Turismo Verde. ¡Te esperamos en la naturaleza!",
+            "clima": "El clima varía según la temporada y el destino. Te recomendamos revisar la previsión del tiempo antes de viajar. ¿Quieres ayuda para verificar el clima en un destino específico?",
+            "comida": "En nuestros destinos ecológicos puedes disfrutar de comida orgánica y local, con opciones para vegetarianos y veganos. ¿Te gustaría recomendaciones de restaurantes?",
+            "seguridad": "Nuestros destinos son seguros y contamos con guías capacitados en primeros auxilios. Además, recomendamos llevar protector solar, agua y seguir las indicaciones de los guías.",
+            "pagos": "Aceptamos pagos con tarjeta de crédito, transferencia bancaria y algunos destinos permiten pago en efectivo. ¿Necesitas información sobre métodos de pago en un destino específico?",
+            "familias": "Tenemos opciones ideales para familias, incluyendo rutas de senderismo fáciles, actividades educativas para niños y alojamientos adaptados. ¿Buscas recomendaciones para viajar en familia?",
+            "mascotas": "Algunos de nuestros alojamientos y rutas permiten mascotas. Te recomendamos consultar previamente para asegurarte de que tu amigo peludo pueda acompañarte.",
+            "mejor_epoca": "Depende del destino. En general, la primavera y el otoño son ideales por el clima templado y la menor afluencia de turistas. ¿Tienes un destino en mente?",
+            "idiomas": "Nuestros guías hablan español e inglés, y en algunos destinos ofrecemos tours en francés y alemán. ¿Necesitas un guía en un idioma específico?",
+            "requisitos": "Algunos destinos pueden requerir permisos especiales o vacunas. Te recomendamos revisar los requisitos con anticipación. ¿Necesitas ayuda con un destino en particular?",
+            "eventos": "Organizamos eventos ecológicos como ferias de productos sostenibles, talleres de reciclaje y festivales de naturaleza. ¿Te gustaría más información sobre eventos en tu zona?"
+        };
+
+            
+            // Configuración del carrusel de fondos
+            const slides = document.querySelectorAll('.slide');
+            let currentSlide = 0;
+            
+            function nextSlide() {
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].classList.add('active');
+            }
+            
+            // Cambiar slide cada 5 segundos
+            setInterval(nextSlide, 5000);
+            
+            // Función para añadir mensajes al chat
+            function addMessage(message, isUser = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+                messageDiv.textContent = message;
+                chatBody.appendChild(messageDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+            
+            // Función para mostrar indicador de escribiendo
+            function showTypingIndicator() {
+                typingIndicator.style.display = 'flex';
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+            
+            // Función para ocultar indicador de escribiendo
+            function hideTypingIndicator() {
+                typingIndicator.style.display = 'none';
+            }
+            
+            // Función para obtener respuesta del bot
+            function getBotResponse(message) {
+                message = message.toLowerCase();
+                
+                // Buscar palabras clave en el mensaje
+                for (const [key, response] of Object.entries(botResponses)) {
+                    if (message.includes(key)) {
+                        return response;
+                    }
+                }
+                
+                // Respuestas basadas en preguntas comunes
+                if (message.includes("dónde") || message.includes("donde") || message.includes("ubicacion") || message.includes("ubicación")) {
+                    return "Tenemos destinos en toda España, principalmente en zonas de alto valor ecológico como Pirineos, Picos de Europa, Sierra Nevada, Doñana y Costa Mediterránea.";
+                } else if (message.includes("cuando") || message.includes("cuándo") || message.includes("temporada") || message.includes("época") || message.includes("epoca")) {
+                    return "La mejor temporada depende del destino. Primavera es ideal para observación de aves y flores, verano para montaña, otoño para bosques y senderismo, e invierno para experiencias más tranquilas en el sur.";
+                } else if (message.includes("familia") || message.includes("niños") || message.includes("niño") || message.includes("pequeños")) {
+                    return "¡Tenemos muchas actividades adaptadas para familias! Talleres de naturaleza para niños, rutas sencillas, granjas educativas y alojamientos con instalaciones específicas para familias.";
+                }
+                
+                // Respuesta por defecto
+                return "Gracias por tu consulta. Para información más específica sobre este tema, te recomiendo que visites nuestra sección de información en la web o contactes directamente con nuestro equipo de atención al cliente.";
+            }
+            
+            // Función para hablar el texto
+            function speak(text) {
+                if (!voiceEnabled) return;
+                
+                if (speaking) {
+                    synth.cancel();
+                }
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Configuración de la voz (buscamos una voz femenina en español)
+                let voices = synth.getVoices();
+                let spanishVoice = voices.find(voice => voice.lang.includes('es') && voice.name.includes('female'));
+                
+                if (!spanishVoice) {
+                    // Si no hay voz femenina en español, usamos cualquier voz en español
+                    spanishVoice = voices.find(voice => voice.lang.includes('es'));
+                }
+                
+                if (spanishVoice) {
+                    utterance.voice = spanishVoice;
+                }
+                
+                // Configuración adicional
+                utterance.rate = 1.0;
+                utterance.pitch = 1.1;
+                
+                // Eventos para controlar el indicador de hablando
+                utterance.onstart = () => {
+                    speaking = true;
+                    speakingIndicator.classList.add('active');
+                };
+                
+                utterance.onend = () => {
+                    speaking = false;
+                    speakingIndicator.classList.remove('active');
+                };
+                
+                synth.speak(utterance);
+            }
+            
+            // Función para procesar el mensaje del usuario
+            function processUserMessage() {
+                const message = chatInput.value.trim();
+                if (message === '') return;
+                
+                // Añadir mensaje del usuario
+                addMessage(message, true);
+                chatInput.value = '';
+                
+                // Mostrar indicador de escribiendo
+                showTypingIndicator();
+                
+                // Simular tiempo de respuesta
+                setTimeout(() => {
+                    // Ocultar indicador de escribiendo
+                    hideTypingIndicator();
+                    
+                    // Obtener y añadir respuesta del bot
+                    const botResponse = getBotResponse(message);
+                    addMessage(botResponse);
+                    
+                    // Leer respuesta en voz alta
+                    speak(botResponse);
+                }, 1000);
+            }
+            
+            // Event listeners
+            chatButton.addEventListener('click', processUserMessage);
+            
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    processUserMessage();
+                }
+            });
+            
+            chatToggle.addEventListener('click', () => {
+                chatContainer.classList.toggle('hidden');
+            });
+            
+            minimizeBtn.addEventListener('click', () => {
+                chatContainer.classList.toggle('minimized');
+                minimizeBtn.innerHTML = chatContainer.classList.contains('minimized') ? 
+                    '<i class="fas fa-expand"></i>' : '<i class="fas fa-minus"></i>';
+            });
+            
+            chatHeader.addEventListener('click', (e) => {
+                if (e.target === chatHeader || e.target.parentElement === chatHeader) {
+                    chatContainer.classList.toggle('minimized');
+                    minimizeBtn.innerHTML = chatContainer.classList.contains('minimized') ? 
+                        '<i class="fas fa-expand"></i>' : '<i class="fas fa-minus"></i>';
+                }
+            });
+            
+            voiceBtn.addEventListener('click', () => {
+                voiceEnabled = !voiceEnabled;
+                voiceBtn.innerHTML = voiceEnabled ? 
+                    '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
+                
+                if (!voiceEnabled && speaking) {
+                    synth.cancel();
+                    speaking = false;
+                    speakingIndicator.classList.remove('active');
+                }
+            });
+            
+            // Cargar voces cuando estén disponibles
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = () => {
+                    // Solo para inicializar las voces
+                    synth.getVoices();
+                };
+            }
+            
+            // Mensaje inicial con voz
+            setTimeout(() => {
+                const welcomeMessage = document.querySelector('.bot-message').textContent;
+                speak(welcomeMessage);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
